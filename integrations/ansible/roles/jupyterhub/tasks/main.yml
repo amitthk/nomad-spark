@@ -1,0 +1,76 @@
+---
+# tasks file for jupyter
+- name: install requirements
+  yum:
+    name:
+      - gcc
+      - gcc-c++
+      - make
+      - nodejs
+    state: present
+
+- set_fact:
+    host_private_ip: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+    host_public_ip: "{{inventory_hostname}}"
+
+- name: install IUS repo
+  become: true
+  yum:
+    name: "https://centos7.iuscommunity.org/ius-release.rpm"
+    state: present
+    update_cache: true
+
+# - name: install Python system packages
+#   become: true
+#   yum:
+#     name:
+#       - python36u
+#       - python36u-devel
+#       - python36u-pip
+#     state: present
+
+- name: install Python system packages
+  include_tasks: python3.yml
+
+# Have to use `shell` here because `type` is a builtin.
+# TODO: Surely there's a module for this?
+- name: find installed executable
+  shell: "type -p {{ python3_command }}"  # noqa 305
+  register: python3_which
+  changed_when: false
+
+- name: link executable to generic name
+  become: true
+  file:
+    src: "{{ python3_which.stdout }}"
+    dest: "{{ python3_which.stdout|dirname }}/python3"
+    state: link
+
+- name: Install pip3
+  shell: python --upgrade pip
+
+- name: Install jupyter using pip3
+  shell: pip3 install notebook jupyter jupyterhub jupyterhub-kubespawner dockerspawner requests jupyterhub-ldap-authenticator ipyparallel
+
+- name: Install configurable-http-proxy
+  shell: npm install -g configurable-http-proxy
+
+- name: setup the jupyter environment
+  template:
+    src: jupyter.sh.j2
+    dest: /etc/profile.d/jupyter.sh
+
+- name: create the jupyter_notebook_config.py
+  template:
+    src: jupyter_notebook_config.py.j2
+    dest: "{{jupyter_home}}/.jupyter/jupyter_notebook_config.py"
+
+- name: create the jupyterhub_config.py
+  template:
+    src: jupyterhub_config.py.j2
+    dest: "{{jupyter_home}}/.jupyter/jupyterhub_config.py"
+
+- name: create the jupyter service
+  template:
+    src: jupyter.service.j2
+    dest: /etc/systemd/system/jupyter.service

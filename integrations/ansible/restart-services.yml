@@ -1,0 +1,39 @@
+- name: restart all
+  hosts: all
+  become: yes
+  become_method: "{{ansible_become_method}}"
+  tasks:
+    - name: "stop the services"
+      systemd:
+        enabled: yes
+        name: "{{item}}"
+        state: stopped
+      with_items:
+        - nomad
+        - vault
+        - consul_aws
+
+    - name: clean up the data dir of consul
+      file:
+        path: /data/consul/data
+        state: absent
+    - name: clean up the data dir of consul
+      file:
+        path: /data/consul/data
+        state: directory
+        owner: consul
+        group: consul
+
+    - name: just force systemd to re-execute itself (2.8 and above)
+      systemd:
+        daemon_reload: yes
+
+    - name: "start services"
+      systemd:
+        enabled: yes
+        name: "{{item}}"
+        state: started
+      with_items:
+        - consul_aws
+        - vault
+        - nomad

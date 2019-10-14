@@ -1,0 +1,37 @@
+private_repo_base: https://jvcdp-repo.s3-ap-southeast-1.amazonaws.com
+group_id: org.mywire.amitthk
+group_url: "{{group_id | replace('.','/')}}"
+
+install_base_dir: /data
+SYSTEMD_SERVICE_HOME: /etc/systemd/system
+PROFILED_HOME: /etc/profile.d
+
+
+NOMADSPARKARTIFACT_ID: spark-2.3.2-nomad
+NOMADSPARKVERSION: 0.8.6
+NOMADSPARKARTIFACT_TYPE: tgz
+NOMADSPARKPACKAGE: "{{NOMADSPARKARTIFACT_ID}}-{{NOMADSPARKVERSION}}.tgz"
+NOMADSPARKDOWNLOAD: "{{private_repo_base}}/{{group_url}}/{{NOMADSPARKARTIFACT_ID}}/{{NOMADSPARKVERSION}}/{{NOMADSPARKPACKAGE}}"
+NOMADSPARKCONFIGDIR: /data/spark/conf
+NOMADSPARKDIR: /data/spark
+
+HADOOPARTIFACT_ID: hadoop
+HADOOPVERSION: 2.7.6
+HADOOPARTIFACT_TYPE: tgz
+HADOOPPACKAGE: "{{HADOOPARTIFACT_ID}}-{{HADOOPVERSION}}.{{HADOOPARTIFACT_TYPE}}"
+HADOOPDOWNLOAD: "{{private_repo_base}}/{{group_url}}/{{HADOOPARTIFACT_ID}}/{{HADOOPVERSION}}/{{HADOOPPACKAGE}}"
+HADOOPCONFIGDIR: /data/hadoop/etc/hadoop
+HADOOPDIR: /data/hadoop
+
+
+
+nomad_spark_package:
+  - { name: hadoop, url: "{{HADOOPDOWNLOAD}}", home_dir: "{{HADOOPDIR}}", config_dir: "{{HADOOPCONFIGDIR}}", package: "{{HADOOPPACKAGE}}"}
+  - { name: spark, url: "{{NOMADSPARKDOWNLOAD}}", home_dir: "{{NOMADSPARKDIR}}", config_dir: "{{NOMADSPARKCONFIGDIR}}", package: "{{NOMADSPARKPACKAGE}}"}
+
+config_templates:
+  - { template_name: "hadoop/core-site-alluxio.xml" , dest: "{{HADOOPCONFIGDIR}}/core-site.xml" }
+  - { template_name: "hadoop/hdfs-site.xml" , dest: "{{HADOOPCONFIGDIR}}/core-site.xml" }
+  - { template_name: "hadoop/core-site-alluxio.xml" , dest: "{{HADOOPCONFIGDIR}}/core-site.xml" }
+  - { template_name: "hadoop/hadoop.sh" , dest: "{{PROFILED_HOME}}/hadoop.sh" }
+  - { template_name: "spark/spark.sh" , dest: "{{PROFILED_HOME}}/spark.sh" }

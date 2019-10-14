@@ -1,0 +1,24 @@
+---
+- name: "Ensure group {{item}} exists"
+  group:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - "{{service_accounts}}"
+
+- name: "Ensure the user {{item}} with a bash shell, appending the group {{item}}"
+  user:
+    name: "{{item}}"
+    shell: /bin/bash
+    groups: "{{item}}"
+    append: yes
+  with_items:
+    - "{{service_accounts}}"
+
+- name: assign the current user to this group
+  user:
+    name: "{{ ansible_user }}"
+    groups: "{{item}}"
+    append: yes
+  with_items:
+    - "{{service_accounts}}"

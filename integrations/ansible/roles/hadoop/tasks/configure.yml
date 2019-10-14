@@ -1,0 +1,12 @@
+---
+- set_fact:
+    host_private_ip: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+    host_public_ip: "{{inventory_hostname}}"
+
+- name: copy configuration files
+  template:
+    src: "{{item.template_name}}.j2"
+    dest: "{{item.dest}}"
+    mode: '0755'
+  with_items:
+    - "{{config_templates}}"

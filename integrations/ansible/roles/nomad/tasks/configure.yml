@@ -1,0 +1,80 @@
+---
+# - name: Add IP address of all hosts to all hosts
+#   lineinfile:
+#     dest: /etc/hosts
+#     regexp: '.*{{ item }}$'
+#     line: "{{hostvars[item]['ansible_eth0']['ipv4']['address']}} {{hostvars[host]['private_ipv4']}} {{item}}"
+#     state: present
+#   when: hostvars[item]['ansible_eth0']['ipv4']['address'] is defined
+#   with_inventory_hostnames:
+#     - all
+# - name: Create Hosts File
+#   template: src=hosts.j2 dest=/etc/hosts owner=root group=root
+
+- name: set hostname
+  hostname:
+    name: "{{inventory_hostname}}"
+
+- set_fact:
+    host_private_ip: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+    host_public_ip: "{{inventory_hostname}}"
+
+- name: copy configuration files
+  template:
+    src: "{{item.template_name}}.j2"
+    dest: "{{item.dest_dir}}/{{item.template_name.split('/')[1]}}"
+    mode: '0755'
+  with_items:
+    - "{{config_templates}}"
+
+# #Add Docker bridge network IP to /etc/resolv.conf (at the top)
+- name: get the DOCKER_BRIDGE_IP_ADDRESS
+  shell: "ifconfig docker0 2>/dev/null|awk '/inet/ {print $2}'|sed 's/addr://'"
+  register: docker_cmd_output
+- set_fact:
+    DOCKER_BRIDGE_IP_ADDRESS: "{{ docker_cmd_output.stdout }}"
+
+# - name: set nameserver $DOCKER_BRIDGE_IP_ADDRESS
+#   lineinfile:
+#     path: /etc/resolv.conf
+#     insertbefore: BOF
+#     line: nameserver {{DOCKER_BRIDGE_IP_ADDRESS}}
+
+# - name: copy the resolv.conf template
+#   template:
+#     src: resolv.conf.j2
+#     dest: /etc/resolv.conf
+#     mode: 0644
+
+- name: ensure the data directories exist
+  file:
+    path: "{{item}}"
+    state: absent
+  with_items:
+    - "{{CONSUL_DATA_DIR}}"
+    - "{{NOMAD_DATA_DIR}}"
+
+- name: ensure the data directories exist
+  file:
+    path: "{{item}}"
+    state: directory
+    mode: 0774
+  with_items:
+    - "{{CONSUL_DATA_DIR}}"
+    - "{{NOMAD_DATA_DIR}}"
+
+# - name: include firewall tasks
+#   include_tasks: firewall.yml
+
+- name: disable firewalld
+  service:
+    name: firewalld
+    state: stopped
+- name: disable firewalld
+  service:
+    name: firewalld
+    enabled: no
+
+- name: Disable SELinux
+  selinux:
+    state: disabled

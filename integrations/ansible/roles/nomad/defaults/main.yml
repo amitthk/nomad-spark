@@ -1,0 +1,124 @@
+---
+private_repo_base: https://jvcdp-repo.s3-ap-southeast-1.amazonaws.com
+group_id: org.mywire.amitthk
+group_url: "{{group_id | replace('.','/')}}"
+
+install_base_dir: /data
+SYSTEMD_SERVICE_HOME: /etc/systemd/system
+PROFILED_HOME: /etc/profile.d
+
+consul_service_user: consuladm
+consul_service_group: consuladm
+vault_service_user: vaultadm
+vault_service_group: vaultadm
+nomad_service_user: nomad
+nomad_service_group: nomad
+
+nomad_pre_req_packages:
+  - unzip
+  - tree
+  - redis
+  - jq
+  - curl
+  - tmux
+  - python-setuptools
+  - python-pip
+
+required_ports:
+  - 8600
+  - 8500
+  - 8501
+  - 8502
+  - 8301
+  - 8302
+  - 8300
+  - 21000
+  - 21255
+  - 4646
+  - 4647
+  - 4648
+
+CONSULVERSION: 1.5.1
+CONSULPACKAGE: "consul_{{CONSULVERSION}}_linux_amd64.zip"
+CONSULDOWNLOAD: "https://releases.hashicorp.com/consul/{{CONSULVERSION}}/{{CONSULPACKAGE}}"
+CONSULDIR: /data/consul
+CONSULCONFIGDIR: "{{CONSULDIR}}/etc/consul.d"
+CONSUL_DATA_DIR: /data/consul/data
+
+VAULTVERSION: 1.0.3
+VAULTPACKAGE: "vault_{{VAULTVERSION}}_linux_amd64.zip"
+VAULTDOWNLOAD: "https://releases.hashicorp.com/vault/{{VAULTVERSION}}/{{VAULTPACKAGE}}"
+VAULTCONFIGDIR: /etc/vault.d
+VAULTDIR: /data/vault
+
+NOMADVERSION: 0.8.6
+NOMADPACKAGE: "nomad_{{NOMADVERSION}}_linux_amd64.zip"
+NOMADDOWNLOAD: "https://releases.hashicorp.com/nomad/{{NOMADVERSION}}/{{NOMADPACKAGE}}"
+NOMADDIR: /data/nomad
+NOMADCONFIGDIR: "{{NOMADDIR}}/etc/nomad.d"
+NOMAD_DATA_DIR: /data/nomad/data
+
+CONSULTEMPLATEVERSION: 0.20.0
+CONSULTEMPLATEPACKAGE: "consul-template_{{CONSULTEMPLATEVERSION}}_linux_amd64.zip"
+CONSULTEMPLATEDOWNLOAD: "https://releases.hashicorp.com/consul-template/{{CONSULTEMPLATEVERSION}}/{{CONSULTEMPLATEPACKAGE}}"
+CONSULTEMPLATEDIR: /data/consul-template
+CONSULTEMPLATECONFIGDIR: "{{CONSULTEMPLATEDIR}}/etc/consul-template.d"
+
+
+
+nomad_packages:
+  - { name: consul, url: "{{CONSULDOWNLOAD}}", home_dir: "{{CONSULDIR}}", config_dir: "{{CONSULCONFIGDIR}}", package: "{{CONSULPACKAGE}}"}
+  - { name: vault, url: "{{VAULTDOWNLOAD}}", home_dir: "{{VAULTDIR}}", config_dir: "{{VAULTCONFIGDIR}}", package: "{{VAULTPACKAGE}}"}
+  - { name: nomad, url: "{{NOMADDOWNLOAD}}", home_dir: "{{NOMADDIR}}", config_dir: "{{NOMADCONFIGDIR}}", package: "{{NOMADPACKAGE}}"}
+  - { name: consul-template, url: "{{CONSULTEMPLATEDOWNLOAD}}", home_dir: "{{CONSULTEMPLATEDIR}}", config_dir: "{{CONSULTEMPLATECONFIGDIR}}", package: "{{CONSULTEMPLATEPACKAGE}}"}
+
+
+
+config_templates:
+  - { template_name: "consul/consul.json" , dest_dir: "{{CONSULCONFIGDIR}}" }
+  - { template_name: "consul/consul_aws.service" , dest_dir: "{{SYSTEMD_SERVICE_HOME}}" }
+  - { template_name: "consul/consul_azure.service" , dest_dir: "{{SYSTEMD_SERVICE_HOME}}" }
+  - { template_name: "hadoop/core-site.xml" , dest_dir: "{{HADOOPCONFIGDIR}}" }
+  - { template_name: "nomad/nomad.hcl" , dest_dir: "{{NOMADCONFIGDIR}}" }
+  - { template_name: "nomad/nomad.service" , dest_dir: "{{SYSTEMD_SERVICE_HOME}}" }
+  - { template_name: "vault/vault.hcl" , dest_dir: "{{VAULTCONFIGDIR}}" }
+  - { template_name: "vault/vault.service" , dest_dir: "{{SYSTEMD_SERVICE_HOME}}" }
+  - { template_name: "consul/consul-template.hcl" , dest_dir: "{{CONSULTEMPLATECONFIGDIR}}" }
+  - { template_name: "consul/consul-template.service" , dest_dir: "{{SYSTEMD_SERVICE_HOME}}" }
+  - { template_name: "consul/consul.sh" , dest_dir: "{{PROFILED_HOME}}" }
+  - { template_name: "vault/vault.sh" , dest_dir: "{{PROFILED_HOME}}" }
+  - { template_name: "nomad/nomad.sh" , dest_dir: "{{PROFILED_HOME}}" }
+  - { template_name: "hadoop/hadoop.sh" , dest_dir: "{{PROFILED_HOME}}" }
+  - { template_name: "spark/spark.sh" , dest_dir: "{{PROFILED_HOME}}" }
+
+client_config_templates:
+  - { template_name: "consul/consul_client.json" , dest_dir: "{{CONSULCONFIGDIR}}" }
+  - { template_name: "nomad/nomad_client.hcl" , dest_dir: "{{NOMADCONFIGDIR}}" }
+
+nomad_stack_ports:
+  - 4646
+  - 8200
+  - 8501
+  - 9998
+  - 9999
+  - 50070
+  - 50075
+  - 18080
+  - 8888
+  - 8300
+  - 8400
+  - 8500
+  - 8600
+  - 8301
+  - 8302
+
+nomad_stack_ports_udp:
+  - 8600
+  - 8301
+  - 8302
+
+consul_retry_join: |
+  "{% for host in groups['hosts'] -%}{% if not host==inventory_hostname %}{{host}}{% if not loop.last %}","{% endif %}{% endif %}{%- endfor %}"
+
+nomad_retry_join: |
+  "{% for host in groups['hosts'] -%}{% if not host==inventory_hostname %}{{host}}:4648{% if not loop.last %}","{% endif %}{% endif %}{%- endfor %}"

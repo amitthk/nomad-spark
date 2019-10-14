@@ -1,0 +1,42 @@
+---
+#ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o ProxyCommand="ssh -i {{ansible_ssh_private_key_file}} -W %h:%p ec2-user@{{bastion_ip}}"'
+
+stack_name: atksv
+ansible_ssh_user: centos
+CONSUL_KEY: 6EyRTh9McFwy6bXfmUxOLQ==
+ansible_become_user: root
+ansible_become_method: sudo
+hadoop_mirror_url: http://atksv.mywire.org
+hadoop_version: 2.7.7
+hive_mirror_url: http://atksv.mywire.org
+hive_version: 2.3.4
+spark_mirror_url: http://atksv.mywire.org
+spark_version : '2.4.0'
+spark_hadoop_version : hadoop2.7
+zookeeper_mirror_url: http://archive.apache.org/dist/zookeeper
+zookeeper_version: 3.4.6
+install_base_dir: /data
+data_dir: /data/hadoop
+openjdk_version: 1.8.0
+start_hdfs_services: 'no'
+alluxio_mirror_url: https://jvcdp-repo.s3-ap-southeast-1.amazonaws.com/org/mywire/amitthk/alluxio
+alluxio_version: '1.8.1'
+
+stack_masters: "{{groups['hosts'][:1]}}"
+stack_workers: "{{groups['hosts'][1:]}}"
+ntp_server_host: "{{stack_masters[0]}}"
+
+super_adm_passwd: "{{ ansible_fqdn | password_hash('sha512') | password_hash('sha512') }}"
+
+all_nodes_count: "{{groups['hosts'] | length}}"
+all_nodes: "{{groups['hosts'] | map('extract',hostvars, ['ansible_host'] | join(','))}}"
+all_node_ips: "{{groups['hosts'] | map('extract',hostvars, ['ansible_eth0','eth0','address'] | join(','))}}"
+
+
+all_nodes_ips_list: |
+  "{% for host in groups['hosts'] -%}{{ hostvars[host]['ansible_default_ipv4']['address'] }}{% if not loop.last %}","{% endif %}{%- endfor %}"
+
+all_hostnames: |
+  "{% for host in groups['hosts'] -%}{{host}}{% if not loop.last %}","{% endif %}{%- endfor %}"
+
+re_download: True

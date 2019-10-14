@@ -1,0 +1,31 @@
+---
+- name: Open up FirewallD ports for all the services (This will need to be cut down to what's required)
+  command: "firewall-cmd --zone=dmz --add-port={{item}}/tcp --permanent"
+  with_items:
+    - "{{nomad_stack_ports}}"
+
+- name: Open up FirewallD ports for all the services (This will need to be cut down to what's required)
+  command: "firewall-cmd --zone=dmz --add-port={{item}}/udp --permanent"
+  with_items:
+    - "{{nomad_stack_ports_udp}}"
+
+- name: reload firewalld
+  command: firewall-cmd --reload
+
+- name: Allow services listen on tcp ports
+  seport:
+    ports: "{{item}}"
+    proto: tcp
+    setype: http_port_t
+    state: present
+  with_items:
+    - "{{nomad_stack_ports}}"
+
+- name: Allow services listen on udp ports
+  seport:
+    ports: "{{item}}"
+    proto: udp
+    setype: afs3_callback_port_t
+    state: present
+  with_items:
+    - "{{nomad_stack_ports_udp}}"

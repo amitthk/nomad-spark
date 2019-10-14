@@ -1,0 +1,10 @@
+---
+- name: hadoop
+  hosts: all
+  become: yes
+  become_user: hadoop
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - hadoop
+  tags:
+    - hadoop

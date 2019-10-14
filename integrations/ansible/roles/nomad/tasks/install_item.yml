@@ -1,0 +1,41 @@
+---
+- debug:
+    msg:
+    - "Processing: {{item.name}} on {{inventory_hostname}}"
+    - "Download Url: {{item.url}}  on {{inventory_hostname}}"
+
+- name: "ensure {{item.name}} home directoy"
+  file:
+    path: "{{item.home_dir}}"
+    state: directory
+    mode: 0755
+
+- name: check if the artifact exists
+  stat: path=/tmp/{{ item.package }}
+  register: package_exists
+
+- name: "download {{item.name}}"
+  get_url:
+    url: "{{ item.url }}"
+    dest: /tmp/{{ item.package }}
+    mode: 0644
+  when: package_exists.stat.exists == False or re_download == True
+
+- name: unarchive 
+  unarchive:
+    remote_src: yes
+    dest: "{{ item.home_dir }}/"
+    src: /tmp/{{ item.package }}
+  when: package_exists.stat.exists == False or re_download == True
+
+- name: "ensure {{item.name}} home directoy"
+  file:
+    path: "{{item.home_dir}}"
+    state: directory
+    mode: 0755
+
+- name: "ensure {{item.name}} config directoy"
+  file:
+    path: "{{item.config_dir}}"
+    state: directory
+    mode: 0755

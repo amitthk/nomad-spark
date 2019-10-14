@@ -1,0 +1,9 @@
+{
+  "ui": true,
+  "log_level": "INFO",
+  "data_dir": "{{CONSUL_DATA_DIR}}",
+  "bind_addr": "{{host_public_ip}}",
+  "client_addr": "{{host_public_ip}}",
+  "advertise_addr": "{{host_public_ip}}",
+  "retry_join": [{{all_hostnames | replace(',""','')}}]
+}

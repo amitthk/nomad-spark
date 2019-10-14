@@ -1,0 +1,19 @@
+[Unit]
+Description=Consul Agent
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty={{CONSULCONFIGDIR}}/consul.json
+
+[Service]
+User=root
+Group=root
+Restart=on-failure
+ExecStart={{CONSULDIR}}/consul agent -config-dir={{CONSULCONFIGDIR}} -log-file={{CONSULDIR}}/consul.log
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+KillMode=process
+LimitNOFILE=65536
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+---
+- name: jupyterhub
+  hosts: all
+  become: yes
+  become_user: jupyter
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - jupyterhub
+  tags:
+    - jupyterhub

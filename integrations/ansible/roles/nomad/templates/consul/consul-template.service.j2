@@ -1,0 +1,15 @@
+[Unit]
+Description=Consul Template Agent
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Restart=on-failure
+ExecStart={{CONSULTEMPLATEDIR}}/consul-template -config={{CONSULTEMPLATECONFIGDIR}}/consul-template.hcl -log-file={{CONSULTEMPLATEDIR}}/consul-template.log
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGTERM
+User={{consul_service_user}}
+Group={{consul_service_group}}
+
+[Install]
+WantedBy=multi-user.target

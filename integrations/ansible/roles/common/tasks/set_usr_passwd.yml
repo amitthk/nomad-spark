@@ -1,0 +1,8 @@
+---
+- name: display the password for the account. 
+  debug:
+    msg: "Setting the password of {{item.name}} to {{item.passwd}}"
+- name: "Set the password for {{item.name}}"
+  user:
+    name: "{{item.name}}"
+    password: "{{item.passwd}}"

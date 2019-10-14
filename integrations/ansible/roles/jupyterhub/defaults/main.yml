@@ -1,0 +1,3 @@
+---
+# defaults file for jupyter
+python_version: "3.7.1"

@@ -1,0 +1,85 @@
+- name: "Install nomad_spark"
+  include_tasks: nomad_spark.yml
+  with_items:
+    - "{{nomad_spark_package}}"
+
+- name: ensure required diredctories
+  file:
+    path: "{{item}}"
+    state: directory
+    mode: 0775
+    recurse: yes
+  with_items:
+    - /etc/hadoop
+    - /data/hadoop/data/nameNode
+    - /data/hadoop/data/dataNode
+    - /data/hadoop/data/hdata
+    - /data/hadoop/logs
+
+- name: backup core-site.xml
+  copy:
+    src: "{{HADOOPDIR}}/etc/hadoop/core-site.xml"
+    dest: '{{HADOOPDIR}}/etc/hadoop/core-site.xml.backup.{{ansible_date_time.iso8601_basic}}'
+    remote_src: yes
+  ignore_errors: yes
+- name: create core-site.xml
+  template:
+    src: 'hadoop/core-site-alluxio.xml.j2'
+    dest: '{{HADOOPDIR}}/etc/hadoop/core-site.xml'
+
+- name: backup hdfs-site.xml
+  copy:
+    src: "{{HADOOPDIR}}/etc/hadoop/hdfs-site.xml"
+    dest: '{{HADOOPDIR}}/etc/hadoop/hdfs-site.xml.backup.{{ansible_date_time.iso8601_basic}}'
+    remote_src: yes
+  ignore_errors: yes
+- name: create hdfs-site.xml
+  template:
+    src: 'hadoop/hdfs-site.xml.j2'
+    dest: '{{HADOOPDIR}}/etc/hadoop/hdfs-site.xml'
+
+- name: backup spark core-site.xml
+  copy:
+    src: "{{NOMADSPARKDIR}}/conf/core-site.xml"
+    dest: '{{NOMADSPARKDIR}}/conf/core-site.xml.backup.{{ansible_date_time.iso8601_basic}}'
+    remote_src: yes
+  ignore_errors: yes
+- name: create spark core-site.xml
+  template:
+    src: 'hadoop/core-site-alluxio.xml.j2'
+    dest: '{{NOMADSPARKDIR}}/conf/core-site.xml'
+
+- name: "Include configure task"
+  include_tasks: configure.yml
+
+- name: symlink for hadoop conf
+  action: "command ln -snf {{item.src}}  {{item.dest}}"
+  with_items:
+    - { src: "{{HADOOPDIR}}/etc/hadoop" , dest: /etc/hadoop/conf }
+    - { src: "{{NOMADSPARKDIR}}" , dest: /opt/spark }
+    - { src: /opt/alluxio/client/alluxio-1.8.1-client.jar, dest: /opt/alluxio/client/alluxio-client.jar}
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/yarn/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/mapreduce/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/hdfs/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/httpfs/tomcat/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/common/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{HADOOPDIR}}/share/hadoop/tools/lib/alluxio-client.jar" }
+    - { src: "/opt/alluxio/client/alluxio-client.jar" , dest: "{{NOMADSPARKDIR}}/jars/alluxio-client.jar" }
+
+- name: create slaves list
+  template:
+    src: hadoop/workers.j2
+    dest: "{{HADOOPDIR}}/etc/hadoop/slaves"
+
+- name: update permissions
+  file:
+    path: "{{item.path}}"
+    state: directory
+    mode: 0775
+    recurse: yes
+    owner: "{{item.owner}}"
+    group:  "{{item.owner_grp}}"
+  with_items:
+    - { path: /data/spark, owner: spark, owner_grp: spark }
+    - { path: /data/hadoop, owner: hadoop, owner_grp: hadoop }
+  

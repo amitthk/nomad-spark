@@ -1,0 +1,16 @@
+[Unit]
+Description=Jupyter Workplace
+
+[Service]
+Type=simple
+PIDFile=/run/jupyter.pid
+EnvironmentFile={{jupyter_home}}/.jupyter/jupyter_environment
+ExecStart=/opt/python-3.6.2/bin/jupyter-notebook --config={{jupyter_home}}/.jupyter/jupyter_notebook_config.py
+User=hadoop
+Group=hadoop
+WorkingDirectory={{jupyter_home}}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

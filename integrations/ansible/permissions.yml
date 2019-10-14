@@ -1,0 +1,42 @@
+- name: Permissions
+  hosts: all
+  become: yes
+  gather_facts: no
+  become_user: "root"
+  become_method: "{{ansible_become_method}}"
+  tags:
+    - permissions
+  tasks:
+    - name: recreate the data dir
+      file:
+        path: "/data/consul/data"
+        state: absent
+    - name: recreate the data dir
+      file:
+        path: "/data/consul/data"
+        state: directory
+    - name: update permissions
+      file:
+        path: "{{item.path}}"
+        state: directory
+        recurse: yes
+        owner: "{{item.owner}}"
+        group:  "{{item.owner_grp}}"
+      with_items:
+        - { path: /data/consul, owner: consul, owner_grp: consul }
+        - { path: /data/consul-template, owner: consul, owner_grp: consul }
+        - { path: /data/nomad, owner: nomad, owner_grp: nomad }
+        - { path: /data/vault, owner: vault, owner_grp: vault }
+        - { path: /data/hadoop, owner: hadoop, owner_grp: hadoop }
+        - { path: /data/spark, owner: spark, owner_grp: spark }
+        - { path: /data/alluxio, owner: alluxio, owner_grp: alluxio }
+    
+    - name: restart services
+      service:
+        name: "{{item}}"
+        state: restarted
+      with_items:
+        - consul_aws
+        - consul-template
+        - nomad
+        - vault

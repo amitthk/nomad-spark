@@ -1,0 +1,15 @@
+---
+- name: "make dir"
+  command: mkdir -p {{ tmpdir }}/{{ python_version }}
+- name: "wget src"
+  get_url: 
+    url: "http://www.python.org/ftp/python/{{ python_version }}/Python-{{ python_version }}.tgz"
+    dest: "{{ tmpdir }}/{{ python_version }}"
+- name: "tar"
+  command: "tar xzvf Python-{{ python_version }}.tgz chdir={{ tmpdir }}/{{ python_version }}"
+- name: "configure"
+  command: "{{ tmpdir }}/{{ python_version }}/Python-{{ python_version }}/configure --prefix={{ tmpdir }}/{{ python_version }} chdir={{ tmpdir }}/{{ python_version }}"
+- name: "make"
+  command: "make chdir={{ tmpdir }}/{{ python_version }}"
+- name: "make install"
+  command: "make install chdir={{ tmpdir }}/{{ python_version }}"

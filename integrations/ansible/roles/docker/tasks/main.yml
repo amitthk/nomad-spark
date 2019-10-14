@@ -1,0 +1,31 @@
+---
+- name: install package
+  include_tasks: install.yml
+  with_items:
+    - "{{docker_package}}"
+
+- name: create docker service file
+  template:
+    src: "{{item}}.j2"
+    dest: "/usr/lib/systemd/system/{{item}}"
+    mode: 0755
+  with_items:
+    - docker.service
+
+- name: enable the docker service
+  service:
+    name: docker
+    enabled: yes
+
+- name: start the docker service
+  service:
+    name: docker
+    state: started
+
+- name: include the users tasks
+  include_tasks: users.yml
+
+- name: start the docker service
+  service:
+    name: docker
+    state: restarted

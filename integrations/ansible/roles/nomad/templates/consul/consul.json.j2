@@ -1,0 +1,21 @@
+{
+    "bootstrap_expect": {{all_nodes_count}},
+    "advertise_addr": "{{host_public_ip}}",
+    "client_addr": "0.0.0.0",
+    "datacenter": "{{stack_name}}",
+    "data_dir": "{{CONSUL_DATA_DIR}}",
+    "domain": "consul",
+    "enable_script_checks": true,
+    "dns_config": {
+        "enable_truncate": true,
+        "only_passing": true
+    },
+    "enable_syslog": true,
+    "encrypt": "{{CONSUL_KEY}}",
+    "leave_on_terminate": true,
+    "log_level": "INFO",
+    "rejoin_after_leave": true,
+    "server": true,
+    "retry_join": [{{all_hostnames | replace(',""','')}}],
+    "ui": true
+}

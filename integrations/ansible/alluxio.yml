@@ -1,0 +1,10 @@
+---
+- name: alluxio
+  hosts: all
+  become: yes
+  become_user: alluxio
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - alluxio
+  tags:
+    - alluxio

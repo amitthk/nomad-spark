@@ -1,0 +1,14 @@
+---
+install_base_dir: /data
+alluxio_dist: 'alluxio-{{ alluxio_version }}'
+alluxio_tar: alluxio-{{ alluxio_version }}-bin.tar.gz
+# alluxio_mirror_url: http://downloads.alluxio.org/downloads/files
+alluxio_url: '{{ alluxio_mirror_url }}/{{ alluxio_version }}/{{alluxio_tar}}'
+alluxio_target_dir: '{{ install_base_dir }}/alluxio-{{ alluxio_version }}'
+alluxio_link_dir: '{{install_base_dir}}/alluxio'
+alluxio_master_ips: |
+  {% for host in stack_masters -%}{{host}}{% if not loop.last %},{% endif %}{%- endfor %}
+alluxio_embedded_journal_addresses_private: |
+  {% for host in stack_masters -%}{{ hostvars[host]['ansible_default_ipv4']['address'] }}:19200{% if not loop.last %},{% endif %}{%- endfor %}
+alluxio_embedded_journal_addresses: |
+  {% for host in stack_masters -%}{{host}}:19200{% if not loop.last %},{% endif %}{%- endfor %}

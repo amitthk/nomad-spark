@@ -1,0 +1,110 @@
+---
+# - name: Add IP address of all hosts to all hosts
+#   lineinfile:
+#     dest: /etc/hosts
+#     regexp: '.*{{ item }}$'
+#     line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }} {{ hostvars[item].inventory_hostname }} {{item}}"
+#     state: present
+#   when: hostvars[item].inventory_hostname is defined
+#   with_items: "{{ groups.hosts }}"
+
+- name: download alluxio
+  get_url:
+    url: '{{ alluxio_url }}'
+    dest: /tmp/{{ alluxio_tar }}
+    mode: 0644
+- name: untar 
+  unarchive:
+    remote_src: yes
+    dest: '{{ install_base_dir }}'
+    src: /tmp/{{ alluxio_tar }}
+    creates: '{{ alluxio_target_dir }}'
+
+- name: create the data dir
+  file:
+    path: "{{alluxio_target_dir}}/data"
+    state: directory
+
+- name: symlink
+  file:
+    state: link
+    src: '{{ alluxio_target_dir }}'
+    dest: '{{ alluxio_link_dir }}'
+
+- name: create the no follow link to /opt/alluxio
+  command: "ln -snf {{alluxio_link_dir}} /opt/alluxio"
+
+- name: include alluxio in default PATH
+  template:
+    src: 'alluxio.sh.j2'
+    dest: '/etc/profile.d/alluxio.sh'
+    mode: '0644'
+
+- name: copy alluxio-site.properties for alluxio
+  template: 
+    src: 'alluxio-site-master.properties.j2' 
+    dest: '{{ alluxio_target_dir }}/conf/alluxio-site.properties' 
+    owner: '{{ ansible_ssh_user }}' 
+    mode: 0644
+  when: "inventory_hostname in stack_masters"
+
+- name: copy alluxio-site.properties for alluxio
+  template: 
+    src: 'alluxio-site-worker.properties.j2' 
+    dest: '{{ alluxio_target_dir }}/conf/alluxio-site.properties' 
+    owner: '{{ ansible_ssh_user }}' 
+    mode: 0644
+  when: "inventory_hostname in stack_workers"
+
+- name: include alluxio masters file
+  template:
+    src: 'masters.j2'
+    dest: '{{ alluxio_target_dir }}/conf/masters'
+  when: "inventory_hostname in stack_masters"
+  
+- name: include alluxio in workers file
+  template:
+    src: 'workers.j2'
+    dest: '{{ alluxio_target_dir }}/conf/workers'
+  when: "inventory_hostname in stack_workers"
+  
+- name: format alluxio
+  action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio format
+  when: "inventory_hostname in stack_masters"
+  environment:
+    JAVA_HOME: '/usr/lib/jvm/java-{{openjdk_version}}'
+  tags:
+    - masters
+- name: start master
+  action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio-start.sh master
+  when: "inventory_hostname in stack_masters"
+  environment:
+    JAVA_HOME: '/usr/lib/jvm/java-{{openjdk_version}}'
+  tags:
+    - masters
+# - name: start job_master
+#   action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio-start.sh job_master
+#   when: "inventory_hostname in stack_masters"
+#   environment:
+#     JAVA_HOME: '/usr/lib/jvm/java-{{openjdk_version}}'
+#   tags:
+#     - masters
+- name: start worker
+  action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio-start.sh worker
+  when: "inventory_hostname in stack_workers "
+  environment:
+    JAVA_HOME: '/usr/lib/jvm/java-{{openjdk_version}}'
+  tags:
+    - workers
+- name: start job_worker
+  action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio-start.sh job_worker
+  when: "inventory_hostname in stack_workers "
+  environment:
+    JAVA_HOME: '/usr/lib/jvm/java-{{openjdk_version}}'
+  tags:
+    - workers
+# - name: mount s3 bucket
+#   action: command {{ install_base_dir }}/alluxio-{{ alluxio_version }}/bin/alluxio fs mount --readonly alluxio://localhost:19998/mnt/s3 s3a://alluxio-quick-start/data
+#   when: "inventory_hostname in groups['stack_mastersers'] "
+#   tags:
+#     - masters

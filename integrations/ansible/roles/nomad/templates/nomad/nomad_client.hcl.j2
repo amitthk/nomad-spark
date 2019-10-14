@@ -1,0 +1,20 @@
+data_dir = "{{NOMAD_DATA_DIR}}"
+bind_addr = "{{inventory_hostname}}"
+
+# Enable the client
+client {
+  enabled = true
+  options {
+    "driver.raw_exec.enable" = "1"
+    "docker.privileged.enabled" = "true"
+  }
+}
+
+consul {
+  address = "{{inventory_hostname}}:8500"
+}
+
+vault {
+  enabled = true
+  address = "http://active.vault.service.consul:8200"
+}

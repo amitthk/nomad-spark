@@ -1,0 +1,30 @@
+---
+- name: Prerequisites
+  hosts: all
+  become: yes
+  become_user: "root"
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - common
+  tags:
+    - common
+
+- name: docker
+  hosts: all
+  become: yes
+  become_user: docker
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - docker
+  tags:
+    - docker
+
+- name: nomad
+  hosts: all
+  become: yes
+  become_user: nomad
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - { role: nomad }
+  tags:
+    - nomad

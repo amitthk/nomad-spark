@@ -1,0 +1,48 @@
+---
+- name: show all ips
+  debug:
+    msg: "All IPS: {{all_hostnames}}"
+- name: ensure prerequisites
+  yum:
+    name: "{{nomad_pre_req_packages}}"
+    state: present
+
+- name: "ensure install base directoy"
+  file:
+    path: '{{install_base_dir}}'
+    state: directory
+    mode: 0755
+
+- name: "Install nomad packages"
+  include_tasks: install_item.yml
+  with_items:
+    - "{{nomad_packages}}"
+
+- name: "Include configure task"
+  include_tasks: configure.yml
+  tags:
+    - nomad
+    - configure_nomad
+
+- name: update permissions
+  file:
+    path: "{{item.path}}"
+    state: directory
+    recurse: yes
+    owner: "{{item.owner}}"
+    group:  "{{item.owner_grp}}"
+  with_items:
+    - { path: /data/consul, owner: consul, owner_grp: consul }
+    - { path: /data/consul-template, owner: consul, owner_grp: consul }
+    - { path: /data/nomad, owner: nomad, owner_grp: nomad }
+    - { path: /data/vault, owner: vault, owner_grp: vault }
+    - { path: /data/spark, owner: spark, owner_grp: spark }
+    - { path: /data/hadoop, owner: hadoop, owner_grp: hadoop }
+
+- name: start services
+  include_tasks: start-service.yml
+  with_items:
+    - consul_aws
+    - vault
+    - nomad
+    - consul-template

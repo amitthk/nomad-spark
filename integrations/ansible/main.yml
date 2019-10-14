@@ -1,0 +1,61 @@
+---
+- name: Prerequisites
+  hosts: all
+  become: yes
+  become_user: "root"
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - common
+  tags:
+    - common
+
+- name: Prerequisites
+  hosts: all
+  gather_facts: yes
+  become: yes
+  become_user: "root"
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - harden
+  tags:
+    - harden
+
+- name: docker
+  hosts: all
+  become: yes
+  become_user: docker
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - docker
+  tags:
+    - docker
+
+- name: nomad
+  hosts: all
+  become: yes
+  become_user: nomad
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - { role: nomad }
+  tags:
+    - nomad
+
+- name: alluxio
+  hosts: all
+  become: yes
+  become_user: alluxio
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - alluxio
+  tags:
+    - alluxio
+
+- name: jupyterhub
+  hosts: all
+  become: yes
+  become_user: jupyter
+  become_method: "{{ansible_become_method}}"
+  roles:
+    - jupyterhub
+  tags:
+    - jupyterhub

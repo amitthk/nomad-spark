@@ -1,0 +1,17 @@
+---
+private_repo_base: https://jvcdp-repo.s3-ap-southeast-1.amazonaws.com
+group_id: org.mywire.amitthk
+group_url: "{{group_id | replace('.','/')}}"
+
+DOCKER_ARTIFACT_ID: docker
+DOCKER_VERSION: 18.06.3-ce
+DOCKER_ARTIFACT_TYPE: tgz
+DOCKER_PACKAGE: "{{DOCKER_ARTIFACT_ID}}-{{DOCKER_VERSION}}.{{DOCKER_ARTIFACT_TYPE}}"
+DOCKER_DOWNLOAD: "{{private_repo_base}}/{{group_url}}/{{DOCKER_ARTIFACT_ID}}/{{DOCKER_VERSION}}/{{DOCKER_PACKAGE}}"
+DOCKER_DIR: /usr/bin
+
+docker_package:
+  - { name: "{{DOCKER_ARTIFACT_ID}}", url: "{{DOCKER_DOWNLOAD}}", home_dir: "{{DOCKER_DIR}}", package: "{{DOCKER_PACKAGE}}"}
+
+service_accounts:
+  - docker

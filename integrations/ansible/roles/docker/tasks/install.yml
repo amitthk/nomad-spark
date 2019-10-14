@@ -1,0 +1,20 @@
+---
+- name: "ensure install base directoy"
+  file:
+    path: '{{item.home_dir}}'
+    state: directory
+    mode: 0755
+
+- name: "download {{item.name}}"
+  get_url:
+    url: "{{ item.url }}"
+    dest: /tmp/{{ item.package }}
+    mode: 0644
+
+- name: unarchive 
+  unarchive:
+    remote_src: yes
+    dest: "{{ item.home_dir }}"
+    src: /tmp/{{ item.package }}
+    mode: 0755
+    extra_opts: [--strip-components=1]
